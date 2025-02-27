@@ -1,32 +1,47 @@
 const express = require('express');
 const cors = require('cors');
-const football = require('./dbconnect/db');
 const dotenv = require('dotenv');
-const data = require('./product/model');
 const bodyParser = require('body-parser');
+const path = require('path');
 
-const app = express(); 
+// Import MongoDB connection function
+const football = require('./dbconnect/db');
+// Import data model
+const data = require('./product/model');
 
+// Initialize app
+const app = express();
+
+// Middleware
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Load environment variables
 dotenv.config();
-football();
+
+// MongoDB Connection
+football(); // Ensure this connects MongoDB when the server starts
+
+// Serve static files (React app build folder)
 app.use(express.static("client/build"));
 app.get("*", (req, res) => {
   res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
 });
 
-app.get('/alldata', async (req, res) => { 
+// API Routes
+
+// Get all teams data
+app.get('/alldata', async (req, res) => {
   try {
-     const Database = await data.find({});
-     res.status(200).json(Database);
+    const Database = await data.find({});
+    res.status(200).json(Database);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
+// Get a team by name
 app.get('/teams/:name', async (req, res) => {
   try {
     const { name } = req.params;
@@ -38,6 +53,7 @@ app.get('/teams/:name', async (req, res) => {
   }
 });
 
+// Update team data
 app.post('/updateTeam', async (req, res) => {
   const { Team, GamesPlayed, Win, Draw, Loss, GoalsFor, GoalsAgainst, Points, Year } = req.body;
   if (!Team) return res.status(400).json({ message: 'Team name is required.' });
@@ -56,6 +72,7 @@ app.post('/updateTeam', async (req, res) => {
   }
 });
 
+// Delete a team by name
 app.delete('/teams/delete/:name', async (req, res) => {
   try {
     const { name } = req.params;
@@ -68,6 +85,7 @@ app.delete('/teams/delete/:name', async (req, res) => {
   }
 });
 
+// Filter teams based on wins greater than a specific value
 app.get('/Win', async (req, res) => {
   const { Win } = req.query;
   if (!Win || isNaN(Win)) return res.status(400).json({ message: 'Please provide a valid "Win" value.' });
@@ -85,6 +103,7 @@ app.get('/Win', async (req, res) => {
   }
 });
 
+// Filter teams by goals for a specific year
 app.get('/teams-by-goals', async (req, res) => {
   const { Year, GoalsFor } = req.query;
   if (!Year || !GoalsFor || isNaN(GoalsFor)) return res.status(400).json({ message: 'Provide valid Year and GoalsFor.' });
@@ -101,6 +120,7 @@ app.get('/teams-by-goals', async (req, res) => {
   }
 });
 
+// Aggregate total stats for a given year
 app.get('/totalsforYear', async (req, res) => {
   const { Year } = req.query;
   if (!Year || isNaN(Year)) return res.status(400).json({ message: 'Provide a valid year.' });
@@ -126,6 +146,7 @@ app.get('/totalsforYear', async (req, res) => {
   }
 });
 
+// Add new team data
 app.post('/addteamdata', async (req, res) => {
   const { Team, GamesPlayed, Win, Draw, Loss, GoalsFor, GoalsAgainst, Points, Year } = req.body;
   if (!Team || !GamesPlayed || !Win || !Draw || !Loss || !GoalsFor || !GoalsAgainst || !Points || !Year) {
@@ -141,7 +162,9 @@ app.post('/addteamdata', async (req, res) => {
   }
 });
 
+// Home route
 app.get('/', (req, res) => res.send('Hello World!'));
 
+// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
