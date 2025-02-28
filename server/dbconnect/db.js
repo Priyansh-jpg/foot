@@ -1,17 +1,23 @@
 const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+
+dotenv.config();
+
 const football = async () => {
-    try {
-      const dbURI = process.env.MONGO_URI; // Use MONGO_URI from .env file
-      await mongoose.connect(dbURI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
-   
-      console.log('MongoDB connected successfully');
-    } catch (err) {
-      console.error('Error connecting to MongoDB:', err.message);
-      process.exit(1);
-    }
-  };
+  try {
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
+      dbName: 'Football2005', // ✅ Explicitly set database name
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+
+    console.log(`✅ MongoDB Connected: ${conn.connection.db.databaseName}`);
+  } catch (error) {
+    console.error('❌ MongoDB Connection Error:', error.message);
+    process.exit(1);
+  }
+};
+
+
    
   module.exports = football;
